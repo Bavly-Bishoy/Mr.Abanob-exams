@@ -82,7 +82,7 @@ async function editExam(examId) {
 
 // نسخ رابط الامتحان
 function copyExamLink(examId) {
-  const examUrl = `${window.location.origin}student/student.html?examId=${examId}`;
+  const examUrl = `${window.location.origin}/student/student.html?examId=${examId}`;
   
   // نسخ الرابط إلى الحافظة
   navigator.clipboard.writeText(examUrl).then(() => {
@@ -119,4 +119,3 @@ createExamBtn.addEventListener("click", () => {
 
 // تحميل الامتحانات عند فتح الصفحة
 loadExams();
-
