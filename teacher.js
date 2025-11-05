@@ -82,7 +82,7 @@ async function editExam(examId) {
 
 // نسخ رابط الامتحان
 function copyExamLink(examId) {
-  const examUrl = `${window.location.origin}/student/student.html?examId=${examId}`;
+  const examUrl = `${window.location.origin}student/student.html?examId=${examId}`;
   
   // نسخ الرابط إلى الحافظة
   navigator.clipboard.writeText(examUrl).then(() => {
@@ -114,8 +114,9 @@ examsListContainer.addEventListener("click", (event) => {
 
 // إضافة امتحان جديد
 createExamBtn.addEventListener("click", () => {
-  window.location.href = "/make_new_quiz/make_new_quiz.html"; // تأكد من وجود صفحة لإنشاء امتحان
+  window.location.href = "make_new_quiz/make_new_quiz.html"; // تأكد من وجود صفحة لإنشاء امتحان
 });
 
 // تحميل الامتحانات عند فتح الصفحة
 loadExams();
+
