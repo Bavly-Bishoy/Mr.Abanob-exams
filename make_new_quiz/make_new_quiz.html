@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إنشاء امتحان جديد</title>
+    <link rel="stylesheet" href="make_new_quiz.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>إنشاء امتحان جديد</h1>
+
+      <div class="quiz-info">
+        <label for="examName">اسم الامتحان:</label>
+        <input type="text" id="examName" placeholder="اكتب اسم الامتحان هنا" />
+
+        <label>لغة الامتحان:</label>
+        <div class="language-options">
+          <label><input type="radio" name="lang" value="ar" checked /> عربي</label>
+          <label><input type="radio" name="lang" value="en" /> English</label>
+        </div>
+      </div>
+
+      <hr />
+
+      <div class="question-section">
+        <h2>إضافة سؤال</h2>
+
+        <label for="questionText">نص السؤال:</label>
+        <textarea id="questionText" placeholder="اكتب السؤال هنا..."></textarea>
+
+        <label for="questionType">نوع السؤال:</label>
+        <div class="select-type">
+          <select id="questionType">
+            <option value="essay">مقالي</option>
+            <option value="truefalse">صح أو خطأ</option>
+            <option value="multiple">اختيارات</option>
+          </select>
+        </div>
+
+        <div id="extraFields"></div>
+
+        <button id="addQuestion" class="add-btn">➕ إضافة السؤال</button>
+        <button id="saveExam" class="save-btn">💾 حفظ الامتحان</button>
+      </div>
+
+      <hr />
+
+      <div class="questions-list">
+        <h2>الأسئلة المضافة:</h2>
+        <ul id="questionsContainer"></ul>
+      </div>
+    </div>
+
+    <button id="backToTeacher" class="back-btn" onclick="window.location.href='../index.html'">
+      ↩️ رجوع لصفحة المعلم
+    </button>
+
+    <!-- ✅ أهم تغيير هنا -->
+    <script type="module" src="make_new_quiz.js"></script>
+
+  </body>
+</html>
