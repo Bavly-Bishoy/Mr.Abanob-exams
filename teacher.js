@@ -3,7 +3,7 @@ import { getDatabase, ref, get, remove, update } from "https://www.gstatic.com/f
 
 /* ---------- Firebase config ---------- */
 const firebaseConfig = {
-  apiKey: "AIzaSyAVFxlp7aXIuIKiq9ySeyE4d6R-a4WLVGc",
+  apiKey: "AIzaSyAVFxlp7aXIuIKiq9ySeyE4د6R-a4WLVGc",
   authDomain: "mr-abanob-exams.firebaseapp.com",
   databaseURL: "https://mr-abanob-exams-default-rtdb.firebaseio.com",
   projectId: "mr-abanob-exams",
@@ -18,104 +18,82 @@ const db = getDatabase(app);
 const examsListContainer = document.getElementById("examsList");
 const createExamBtn = document.getElementById("createExamBtn");
 
-// تحميل الامتحانات من Firebase
+// ✅ تحميل الامتحانات من Firebase
 async function loadExams() {
-  const examsRef = ref(db, "exams");
-  const snapshot = await get(examsRef);
+  const snapshot = await get(ref(db, "exams"));
 
   if (!snapshot.exists()) {
     examsListContainer.innerHTML = "❌ لا توجد امتحانات حالياً.";
     return;
   }
 
-  const exams = Object.values(snapshot.val());
-  examsListContainer.innerHTML = ""; // حذف النص "جارٍ التحميل..." السابق
+  examsListContainer.innerHTML = "";
+  const exams = snapshot.val();
 
-  exams.forEach((exam, idx) => {
+  Object.keys(exams).forEach((id) => {
+    const exam = exams[id];
     const examItem = document.createElement("div");
     examItem.className = "exam-item";
     examItem.innerHTML = `
-      <span><strong>${exam.name}</strong> (ID: ${exam.id})</span>
+      <span><strong>${exam.name}</strong> (ID: ${id})</span>
       <div>
-        <button class="editBtn" data-id="${exam.id}">✏️ تعديل</button>
-        <button class="deleteBtn" data-id="${exam.id}">❌ حذف</button>
-        <button class="copyLinkBtn" data-id="${exam.id}">📑 نسخ الرابط</button>
+        <button class="openBtn" data-id="${id}">👁 عرض</button>
+        <button class="editBtn" data-id="${id}">✏ تعديل</button>
+        <button class="deleteBtn" data-id="${id}">🗑 حذف</button>
+        <button class="copyLinkBtn" data-id="${id}">🔗 نسخ الرابط</button>
       </div>
     `;
     examsListContainer.appendChild(examItem);
   });
 }
 
-// حذف الامتحان من Firebase
+// ✅ حذف الامتحان من Firebase
 async function deleteExam(examId) {
-  const examRef = ref(db, `exams/${examId}`);
-  await remove(examRef); // حذف الامتحان من قاعدة البيانات
-  alert("✅ تم حذف الامتحان!");
-  loadExams(); // إعادة تحميل الامتحانات بعد الحذف
+  await remove(ref(db, `exams/${examId}`));
+  alert("✅ تم حذف الامتحان من Firebase بنجاح!");
+  loadExams();
 }
 
-// تعديل الامتحان
+// ✅ تعديل الامتحان (فقط تعديل الاسم للآن)
 async function editExam(examId) {
-  const examRef = ref(db, `exams/${examId}`);
-  const snapshot = await get(examRef);
+  const snapshot = await get(ref(db, `exams/${examId}`));
+  if (!snapshot.exists()) return alert("❌ الامتحان غير موجود!");
 
-  if (!snapshot.exists()) {
-    alert("❌ لم يتم العثور على الامتحان للتعديل.");
-    return;
-  }
+  const oldName = snapshot.val().name;
+  const newName = prompt("📝 اكتب اسم الامتحان الجديد:", oldName);
+  if (!newName || newName === oldName) return;
 
-  const examData = snapshot.val();
-  const newName = prompt("أدخل اسم الامتحان الجديد:", examData.name);
-
-  if (newName && newName !== examData.name) {
-    // تحديث اسم الامتحان في Firebase
-    await update(examRef, {
-      name: newName
-    });
-
-    alert("✅ تم تعديل الامتحان بنجاح!");
-    loadExams(); // إعادة تحميل الامتحانات بعد التعديل
-  } else {
-    alert("❌ لم يتم التعديل. اسم الامتحان هو نفسه.");
-  }
+  await update(ref(db, `exams/${examId}`), { name: newName });
+  alert("✅ تم تعديل الاسم بنجاح!");
+  loadExams();
 }
 
-// نسخ رابط الامتحان
+// ✅ نسخ رابط الامتحان الصحيح للطالب
 function copyExamLink(examId) {
   const examUrl = `${window.location.origin}/student/student.html?examId=${examId}`;
-  
-  // نسخ الرابط إلى الحافظة
-  navigator.clipboard.writeText(examUrl).then(() => {
-    alert("✅ تم نسخ الرابط! يمكنك الآن مشاركته مع الطلاب.");
-  }).catch(err => {
-    alert("❌ حدث خطأ أثناء نسخ الرابط. حاول مرة أخرى.");
-    console.error(err);
-  });
+  navigator.clipboard.writeText(examUrl);
+  alert("✅ تم نسخ رابط الامتحان:\n" + examUrl);
 }
 
-// أزرار التفاعل مع كل امتحان
-examsListContainer.addEventListener("click", (event) => {
-  const examId = event.target.dataset.id;
-  
-  if (event.target.classList.contains("deleteBtn")) {
-    if (confirm("هل أنت متأكد أنك تريد حذف هذا الامتحان؟")) {
-      deleteExam(examId);
-    }
-  }
+// ✅ فتح الامتحان كطالب
+function openExam(examId) {
+  const url = `/student/student.html?examId=${examId}`;
+  window.open(url, "_blank");
+}
 
-  if (event.target.classList.contains("editBtn")) {
-    editExam(examId);
-  }
+// ✅ أحداث الأزرار
+examsListContainer.addEventListener("click", e => {
+  const examId = e.target.dataset.id;
 
-  if (event.target.classList.contains("copyLinkBtn")) {
-    copyExamLink(examId);
-  }
+  if (e.target.classList.contains("deleteBtn")) deleteExam(examId);
+  if (e.target.classList.contains("editBtn")) editExam(examId);
+  if (e.target.classList.contains("copyLinkBtn")) copyExamLink(examId);
+  if (e.target.classList.contains("openBtn")) openExam(examId);
 });
 
-// إضافة امتحان جديد
+// ✅ إنشاء امتحان جديد
 createExamBtn.addEventListener("click", () => {
-  window.location.href = "make_new_quiz/make_new_quiz.html"; // تأكد من وجود صفحة لإنشاء امتحان
+  window.location.href = "../make_new_quiz/make_new_quiz.html";
 });
 
-// تحميل الامتحانات عند فتح الصفحة
 loadExams();
