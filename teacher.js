@@ -93,7 +93,8 @@ examsListContainer.addEventListener("click", e => {
 
 // ✅ إنشاء امتحان جديد
 createExamBtn.addEventListener("click", () => {
-  window.location.href = "../make_new_quiz/make_new_quiz.html";
+  window.location.href = "make_new_quiz/make_new_quiz.html";
 });
 
 loadExams();
+
