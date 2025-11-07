@@ -25,7 +25,7 @@ const db = getDatabase(app);
 let questions = [];
 let editingIndex = null;
 
-/* ------ escape HTML (كان ناقص) ------ */
+/* ------ escape HTML ------ */
 function escapeHtml(t) {
   return t.replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
@@ -44,7 +44,7 @@ function translateType(type) {
   return "اختيارات";
 }
 
-/* ------ إظهار حقول حسب نوع السؤال ------ */
+/* ------ إظهار الحقول ------ */
 function renderExtraFields() {
   const type = questionType().value;
   const container = extraFields();
@@ -64,7 +64,6 @@ function renderExtraFields() {
       </div>
       <button id="addOptionBtn" class="add-btn" style="background:#17a2b8">➕ إضافة اختيار</button>
     `;
-
     document.getElementById("addOptionBtn").onclick = () => {
       document.getElementById("optionsWrapper").insertAdjacentHTML("beforeend", `
         <div class="option-input">
@@ -90,7 +89,7 @@ function renderExtraFields() {
   }
 }
 
-/* -------- إضافة / تعديل سؤال -------- */
+/* -------- إضافة / تعديل -------- */
 function addQuestionHandler() {
   const text = questionText().value.trim();
   const type = questionType().value;
@@ -148,8 +147,8 @@ function renderQuestions() {
       </div>
 
       <div class="action-buttons">
-        <button class="edit-btn" data-index="${i}">✏️ تعديل</button>
-        <button class="delete-btn" data-index="${i}">🗑️ حذف</button>
+        <button class="edit-btn" data-index="${i}" style="background:#28a745">✏️ تعديل</button>
+        <button class="delete-btn" data-index="${i}" style="background:#dc3545">🗑️ حذف</button>
       </div>
     `;
 
@@ -188,7 +187,7 @@ function editQuestion(i) {
   }
 
   if (q.type === "truefalse") {
-    document.querySelector(`input[name="tf"][value="${q.correct}"]`).checked = true;
+    document.querySelector(`input[name="tf"][value="${q.correct ? "true" : "false"}"]`).checked = true;
   }
 
   if (q.type === "essay") {
@@ -204,7 +203,7 @@ function deleteQuestion(i) {
   renderQuestions();
 }
 
-/* -------- حفظ الامتحان -------- */
+/* -------- حفظ -------- */
 async function saveExamHandler() {
   const examName = document.getElementById("examName").value.trim();
   const lang = document.querySelector("input[name='lang']:checked").value;
@@ -218,8 +217,11 @@ async function saveExamHandler() {
     createdAt: Date.now()
   };
 
-  await set(push(ref(db, "exams")), exam);
-  alert("✅ تم حفظ الامتحان");
+  const newExamRef = push(ref(db, "exams"));
+  exam.id = newExamRef.key;
+  await set(newExamRef, exam);
+
+  alert("✅ تم حفظ الامتحان بنجاح");
   window.location.href = "../index.html";
 }
 
