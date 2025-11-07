@@ -65,17 +65,15 @@ function editExam(examId) {
 
 /* ---------- نسخ رابط الطالب ---------- */
 function copyExamLink(examId) {
-  const examUrl = `${window.location.origin}/student/student.html?examId=${examId}`;
+  const examUrl = `https://bavly-bishoy.github.io/Mr.Abanob-exams/student/student.html?examId=${examId}`;
   navigator.clipboard.writeText(examUrl).then(() => {
-    alert("✅ تم نسخ الرابط!");
+    alert("✅ تم نسخ الرابط:\n" + examUrl);
   });
 }
 
-
-/* ---------- فتح كطالب ---------- */
 function openAsStudent(examId) {
-  const baseUrl = "https://bavly-bishoy.github.io";
-  window.open(`${baseUrl}/student/student.html?examId=${examId}`, "_blank");
+  const url = `https://bavly-bishoy.github.io/Mr.Abanob-exams/student/student.html?examId=${examId}`;
+  window.open(url, "_blank");
 }
 
 /* ---------- أحداث الأزرار ---------- */
@@ -95,4 +93,5 @@ createExamBtn.addEventListener("click", () => {
 
 /* ---------- تحميل الامتحانات عند الفتح ---------- */
 loadExams();
+
 
