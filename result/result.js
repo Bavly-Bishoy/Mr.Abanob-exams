@@ -1,8 +1,7 @@
-// result.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import { getDatabase, ref, get, push } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-/* ---------- Firebase config (نفس الإعدادات) ---------- */
+/* ---------- Firebase config ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyAVFxlp7aXIuIKiq9ySeyE4d6R-a4WLVGc",
   authDomain: "mr-abanob-exams.firebaseapp.com",
@@ -21,9 +20,8 @@ const examNameEl = document.getElementById("examName");
 const studentNameDisplay = document.getElementById("studentNameDisplay");
 const resultsContainer = document.getElementById("resultsContainer");
 const summaryEl = document.getElementById("summary");
-const doneBtn = document.getElementById("doneBtn");
 
-/* ---------- data from localStorage & URL ---------- */
+/* ---------- Data ---------- */
 const answers = JSON.parse(localStorage.getItem("studentAnswers") || "{}");
 const studentName = localStorage.getItem("studentName") || "غير معروف";
 const examIdFromStorage = localStorage.getItem("examId");
@@ -33,10 +31,10 @@ const examId = params.get("examId") || examIdFromStorage;
 
 studentNameDisplay.textContent = studentName;
 
-/* ---------- Apps Script URL (ضع الرابط الذي أعطيته أنت هنا) ---------- */
+/* ---------- Apps Script ---------- */
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwuI3jr90X_khH5yFwI0sIGto4YgFx0d8b3C4sgsenoC7XzOJIG0NwWvZM7Pc60Dm_C/exec";
 
-/* ---------- تحميل الامتحان وتصحيح ---------- */
+/* ---------- تحميل وتصحيح ---------- */
 async function loadAndGrade() {
   if (!examId) {
     examNameEl.textContent = "❌ examId غير موجود";
@@ -54,7 +52,7 @@ async function loadAndGrade() {
   const exam = snap.val();
   examNameEl.textContent = exam.name || "امتحان";
 
-  // grade
+  // تصحيح
   let correctCount = 0;
   const total = exam.questions.length;
   const details = [];
@@ -72,14 +70,13 @@ async function loadAndGrade() {
     } else if (q.type === "truefalse") {
       correctDisplay = String(q.correct);
       isCorrect = userAns === String(q.correct);
-    } else { // essay
+    } else { 
       correctDisplay = q.correctAnswer || "";
       isCorrect = essayMatch(userAns, q.correctAnswer || "");
     }
 
     if (isCorrect) correctCount++;
 
-    // عرض كل سؤال
     const div = document.createElement("div");
     div.className = `question-result ${isCorrect ? "correct" : "wrong"}`;
     div.innerHTML = `
@@ -98,11 +95,9 @@ async function loadAndGrade() {
     });
   });
 
-  // عرض الملخص
   const percent = Math.round((correctCount / total) * 100);
   summaryEl.innerHTML = `<h3>الدرجة: ${correctCount} / ${total} — (${percent}%)</h3>`;
 
-  // حفظ النتيجة على Firebase
   const resultObj = {
     examId,
     examName: exam.name || "",
@@ -118,10 +113,9 @@ async function loadAndGrade() {
     await push(ref(db, `results/${examId}`), resultObj);
     console.log("✅ تم حفظ النتيجة في Firebase");
   } catch (err) {
-    console.error("❌ خطأ في حفظ النتيجة في Firebase:", err);
+    console.error("❌ خطأ في حفظ النتيجة:", err);
   }
 
-  // إرسال للـ Google Sheet عبر Apps Script
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
@@ -137,14 +131,9 @@ async function loadAndGrade() {
 
 function escapeHtml(s) {
   if (!s) return "";
-  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-/* بسيط: مقارنة إجابة مقالية — نهج مجاني:
-   - نأخذ كلمات من الإجابة النموذجية (correctAnswer)
-   - نتحقق إذا الطالب كتب أي من الكلمات الأساسية (مع تجاهل كلمات صغيرة)
-   - إذا وجدت نسبة كلمات مطابقة >= حد (مثلاً 30%) نعتبرها صحيحة
-*/
 function essayMatch(user, correct) {
   if (!user || !correct) return false;
   const clean = str => str.toLowerCase().replace(/[^ء-يa-z0-9\s]/g,'').trim();
@@ -159,17 +148,7 @@ function essayMatch(user, correct) {
   });
 
   const matchRatio = matches / correctWords.length;
-  return matchRatio >= 0.3; // عتبة 30% — تقدر تعدلها
+  return matchRatio >= 0.3;
 }
 
-doneBtn.addEventListener("click", () => {
-  // نظف التخزين المحلي لو حبيت
-  localStorage.removeItem("studentAnswers");
-  localStorage.removeItem("studentName");
-  localStorage.removeItem("examId");
-  // ارجع للصفحة الرئيسية المعلم (غّير المسار لو لازم)
-  window.location.href = "../teacher/teacher.html";
-});
-
-/* تشغيل */
 loadAndGrade();
