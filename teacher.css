@@ -67,3 +67,38 @@ button {
 button:focus {
   outline: none;
 }
+.exam-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1f8ff;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #cce5ff;
+}
+
+.btn-group {
+  display: flex;
+  gap: 6px;
+}
+
+button {
+  padding: 10px 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.editBtn { background: #28a745; }     /* أخضر */
+.deleteBtn { background: #dc3545; }   /* أحمر */
+.copyLinkBtn { background: #007bff; } /* أزرق */
+.viewBtn { background: #6c757d; }     /* رمادي */
+
+button:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
