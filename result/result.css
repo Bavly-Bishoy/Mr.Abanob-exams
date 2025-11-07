@@ -5,12 +5,14 @@ body {
   direction: rtl;
   color: #222;
 }
+
 header {
   background: #007bff;
   color: #fff;
   text-align: center;
   padding: 18px;
 }
+
 main {
   max-width: 900px;
   margin: 28px auto;
@@ -19,6 +21,7 @@ main {
   border-radius: 14px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
+
 #resultsContainer .question-result {
   padding: 12px;
   border-radius: 10px;
@@ -26,26 +29,13 @@ main {
   border: 1px solid #dbeeff;
   background: #f8fbff;
 }
+
 .correct {
   border: 2px solid #28a745;
   background: #eaffea;
 }
+
 .wrong {
   border: 2px solid #dc3545;
   background: #ffeaea;
-}
-#doneBtn {
-  width: 100%;
-  padding: 12px;
-  margin-top: 12px;
-  background: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-}
-#doneBtn:hover {
-  background: #0056b3;
-  transform: scale(1.01);
 }
