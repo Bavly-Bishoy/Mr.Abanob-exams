@@ -62,6 +62,7 @@ async function loadAndGrade() {
     const userAns = (answers[key] || "").toString();
     let isCorrect = false;
     let correctDisplay = "";
+    let reason = "";
 
     if (q.type === "multiple") {
       const correctOp = Array.isArray(q.options) ? q.options.find(o => o.correct) : null;
@@ -72,7 +73,9 @@ async function loadAndGrade() {
       isCorrect = userAns === String(q.correct);
     } else { 
       correctDisplay = q.correctAnswer || "";
-      isCorrect = essayMatch(userAns, q.correctAnswer || "");
+      const essayResult = essayMatch(userAns, q.correctAnswer || "");
+      isCorrect = essayResult.correct;
+      reason = essayResult.reason || "";
     }
 
     if (isCorrect) correctCount++;
@@ -82,7 +85,12 @@ async function loadAndGrade() {
     div.innerHTML = `
       <p><strong>${idx + 1}.</strong> ${escapeHtml(q.text)}</p>
       <p><strong>إجابتك:</strong> ${escapeHtml(userAns || "لم يجب")}</p>
-      ${ (q.type !== "essay") ? `<p><strong>الإجابة الصحيحة:</strong> ${escapeHtml(correctDisplay)}</p>` : `<p><strong>الإجابة النموذجية:</strong> ${escapeHtml(correctDisplay)}</p>`}
+      ${
+        (q.type !== "essay")
+          ? `<p><strong>الإجابة الصحيحة:</strong> ${escapeHtml(correctDisplay)}</p>`
+          : `<p><strong>الإجابة النموذجية:</strong> ${escapeHtml(correctDisplay)}</p>
+             ${reason ? `<p style="color:#c00;"><strong>ملاحظة:</strong> ${escapeHtml(reason)}</p>` : ""}`
+      }
     `;
     resultsContainer.appendChild(div);
 
@@ -91,7 +99,8 @@ async function loadAndGrade() {
       question: q.text,
       userAnswer: userAns,
       correctAnswer: correctDisplay,
-      isCorrect
+      isCorrect,
+      reason
     });
   });
 
@@ -131,11 +140,15 @@ async function loadAndGrade() {
 
 function escapeHtml(s) {
   if (!s) return "";
-  return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
+/* ---------- تصحيح الإجابات المقاليّة ---------- */
 function essayMatch(user, correct) {
-  if (!user || !correct) return false;
+  if (!user || !correct) return { correct: false, reason: "لم يتم إدخال إجابة." };
 
   const clean = str => str
     .toLowerCase()
@@ -164,7 +177,8 @@ function essayMatch(user, correct) {
   const userWords = clean(user).split(/\s+/).map(normalize);
   const correctWords = clean(correct).split(/\s+/).map(normalize);
 
-  if (userWords.length === 0 || correctWords.length === 0) return false;
+  if (userWords.length === 0 || correctWords.length === 0)
+    return { correct: false, reason: "لم يتم إدخال إجابة مفهومة." };
 
   let matches = 0;
   correctWords.forEach(cw => {
@@ -172,8 +186,23 @@ function essayMatch(user, correct) {
   });
 
   const matchRatio = matches / correctWords.length;
-  return matchRatio >= 0.15; // تم تخفيض الحد من 30% إلى 15%
+  const missing = correctWords.filter(w => !userWords.includes(w));
+  const extra = userWords.filter(w => !correctWords.includes(w));
+
+  let reason = "";
+  if (matchRatio >= 0.15 && matchRatio < 0.8) {
+    reason = "إجابتك قريبة من الصحيحة، لكنها ليست مطابقة تمامًا.";
+  } else if (missing.length > 0 && extra.length === 0) {
+    reason = `ناقص كلمات مثل: ${missing.slice(0, 3).join(", ")}`;
+  } else if (extra.length > 0 && missing.length === 0) {
+    reason = `في إجابتك كلمات زائدة: ${extra.slice(0, 3).join(", ")}`;
+  } else if (missing.length > 0 && extra.length > 0) {
+    reason = `ناقص كلمات مثل: ${missing.slice(0, 2).join(", ")}، وزايد: ${extra.slice(0, 2).join(", ")}`;
+  }
+
+  const isCorrect = matchRatio >= 0.15; // تساهل أكبر
+  return { correct: isCorrect, reason };
 }
 
+/* ---------- تشغيل ---------- */
 loadAndGrade();
-
