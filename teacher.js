@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import { getDatabase, ref, get, remove, update } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+import { getDatabase, ref, get, remove } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-/* ---------------- Firebase Config ---------------- */
+/* ---------- Firebase config ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyAVFxlp7aXIuIKiq9ySeyE4d6R-a4WLVGc",
   authDomain: "mr-abanob-exams.firebaseapp.com",
@@ -18,7 +18,7 @@ const db = getDatabase(app);
 const examsListContainer = document.getElementById("examsList");
 const createExamBtn = document.getElementById("createExamBtn");
 
-/* ✅ تحميل الامتحانات */
+/* ---------- تحميل الامتحانات ---------- */
 async function loadExams() {
   const examsRef = ref(db, "exams");
   const snapshot = await get(examsRef);
@@ -28,96 +28,75 @@ async function loadExams() {
     return;
   }
 
+  const exams = Object.entries(snapshot.val());
   examsListContainer.innerHTML = "";
-  const examsObj = snapshot.val();
 
-  Object.keys(examsObj).forEach((key) => {
-    const exam = examsObj[key];
+  exams.forEach(([id, exam]) => {
     const examItem = document.createElement("div");
     examItem.className = "exam-item";
-
     examItem.innerHTML = `
-      <span><strong>${exam.name}</strong> (ID: ${exam.id})</span>
-      <div>
-        <button class="editBtn" data-id="${exam.id}">✏️ تعديل</button>
-        <button class="deleteBtn" data-id="${exam.id}">❌ حذف</button>
-        <button class="copyLinkBtn" data-id="${exam.id}">📑 نسخ الرابط</button>
-        <button class="viewBtn" data-id="${exam.id}">👁 فتح كطالب</button>
+      <span><strong>${exam.name}</strong> (ID: ${id})</span>
+      <div class="btn-group">
+        <button class="editBtn" data-id="${id}">✏️ تعديل</button>
+        <button class="deleteBtn" data-id="${id}">🗑️ حذف</button>
+        <button class="copyLinkBtn" data-id="${id}">🔗 نسخ الرابط</button>
+        <button class="viewBtn" data-id="${id}">👁️ فتح كطالب</button>
       </div>
     `;
-
     examsListContainer.appendChild(examItem);
   });
 }
 
-/* ✅ حذف الامتحان من Firebase */
+/* ---------- حذف امتحان ---------- */
 async function deleteExam(examId) {
+  if (!confirm("هل أنت متأكد أنك تريد حذف هذا الامتحان نهائياً؟")) return;
+
   const examRef = ref(db, `exams/${examId}`);
   await remove(examRef);
-  alert("✅ تم حذف الامتحان بالكامل من Firebase");
+  alert("✅ تم حذف الامتحان بنجاح!");
   loadExams();
 }
 
-/* ✅ تعديل الامتحان */
-async function editExam(examId) {
-  const examRef = ref(db, `exams/${examId}`);
-  const snapshot = await get(examRef);
-
-  if (!snapshot.exists()) {
-    alert("❌ الامتحان غير موجود للتعديل.");
-    return;
-  }
-
-  const examData = snapshot.val();
-  const newName = prompt("✏️ أدخل اسم الامتحان الجديد:", examData.name);
-
-  if (newName && newName !== examData.name) {
-    await update(examRef, { name: newName });
-    alert("✅ تم تعديل الامتحان!");
-    loadExams();
-  } else {
-    alert("❌ لم يتم التعديل.");
-  }
+/* ---------- تعديل امتحان ---------- */
+function editExam(examId) {
+  // بيروح لصفحة إنشاء امتحان ويفتح نفس الامتحان للتعديل
+  window.location.href = `make_new_quiz/make_new_quiz.html?edit=${examId}`;
 }
 
-/* ✅ نسخ رابط الامتحان */
+/* ---------- نسخ رابط الطالب ---------- */
 function copyExamLink(examId) {
-  const examUrl = `${window.location.origin}/student/student.html?examId=${examId}`;
-  navigator.clipboard.writeText(examUrl)
-    .then(() => alert("✅ تم نسخ الرابط!"))
-    .catch(() => alert("❌ خطأ أثناء النسخ"));
+  // لو الموقع على GitHub Pages
+  const baseUrl = "https://bavly-bishoy.github.io";
+  const examUrl = `${baseUrl}/student/student.html?examId=${examId}`;
+
+  navigator.clipboard.writeText(examUrl).then(() => {
+    alert("✅ تم نسخ رابط الامتحان! أرسله للطلاب.");
+  }).catch(err => {
+    console.error(err);
+    alert("❌ حدث خطأ أثناء نسخ الرابط.");
+  });
 }
 
-/* ✅ فتح الامتحان كطالب */
-function openExamAsStudent(examId) {
-  window.open(`/student/student.html?examId=${examId}`, "_blank");
+/* ---------- فتح كطالب ---------- */
+function openAsStudent(examId) {
+  const baseUrl = "https://bavly-bishoy.github.io";
+  window.open(`${baseUrl}/student/student.html?examId=${examId}`, "_blank");
 }
 
-/* ✅ الأزرار */
+/* ---------- أحداث الأزرار ---------- */
 examsListContainer.addEventListener("click", (event) => {
   const examId = event.target.dataset.id;
 
-  if (event.target.classList.contains("deleteBtn")) {
-    if (confirm("⚠ هل تريد فعلاً حذف هذا الامتحان؟")) deleteExam(examId);
-  }
-
-  if (event.target.classList.contains("editBtn")) {
-    editExam(examId);
-  }
-
-  if (event.target.classList.contains("copyLinkBtn")) {
-    copyExamLink(examId);
-  }
-
-  if (event.target.classList.contains("viewBtn")) {
-    openExamAsStudent(examId);
-  }
+  if (event.target.classList.contains("deleteBtn")) deleteExam(examId);
+  if (event.target.classList.contains("editBtn")) editExam(examId);
+  if (event.target.classList.contains("copyLinkBtn")) copyExamLink(examId);
+  if (event.target.classList.contains("viewBtn")) openAsStudent(examId);
 });
 
-/* ✅ إنشاء امتحان جديد */
+/* ---------- زر إنشاء امتحان جديد ---------- */
 createExamBtn.addEventListener("click", () => {
   window.location.href = "make_new_quiz/make_new_quiz.html";
 });
 
-/* ✅ تحميل الامتحانات عند فتح الصفحة */
+/* ---------- تحميل الامتحانات عند الفتح ---------- */
 loadExams();
