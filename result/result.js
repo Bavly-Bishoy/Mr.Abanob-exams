@@ -148,15 +148,17 @@ function escapeHtml(s) {
 
 /* ---------- تصحيح الإجابات المقاليّة ---------- */
 function essayMatch(user, correct) {
-  if (!user || !correct) return { correct: false, reason: "لم يتم إدخال إجابة." };
+  if (!user || !correct)
+    return { correct: false, reason: "لم يتم إدخال إجابة." };
 
   const clean = str => str
     .toLowerCase()
     .replace(/[^ء-يa-z0-9\s']/g, '')
-    .replace(/\bi'm\b/g, 'i am')
+    .replace(/\b(i'm)\b/g, 'i am')
     .replace(/\bcan't\b/g, 'cannot')
     .replace(/\bwon't\b/g, 'will not')
     .replace(/\bdon't\b/g, 'do not')
+    .replace(/\bthe\b/g, '') // ← تجاهل كلمة "the"
     .trim();
 
   const normalize = word => {
@@ -167,6 +169,9 @@ function essayMatch(user, correct) {
       happy: ["glad", "pleased"],
       sad: ["unhappy", "upset"],
       thank: ["thanks", "thankyou", "thank you"],
+      energy: ["power", "strength"],
+      eat: ["consume"],
+      food: ["meal", "nutrition"],
     };
     for (const [base, list] of Object.entries(synonyms)) {
       if (list.includes(word)) return base;
@@ -190,8 +195,10 @@ function essayMatch(user, correct) {
   const extra = userWords.filter(w => !correctWords.includes(w));
 
   let reason = "";
-  if (matchRatio >= 0.15 && matchRatio < 0.8) {
-    reason = "إجابتك قريبة من الصحيحة، لكنها ليست مطابقة تمامًا.";
+  if (matchRatio >= 0.8) {
+    return { correct: true, reason: "" }; // إجابة صحيحة تقريبًا
+  } else if (matchRatio >= 0.5) {
+    reason = "إجابتك قريبة من الصحيحة جدًا، بس فيها اختلاف بسيط في الصياغة.";
   } else if (missing.length > 0 && extra.length === 0) {
     reason = `ناقص كلمات مثل: ${missing.slice(0, 3).join(", ")}`;
   } else if (extra.length > 0 && missing.length === 0) {
@@ -200,9 +207,10 @@ function essayMatch(user, correct) {
     reason = `ناقص كلمات مثل: ${missing.slice(0, 2).join(", ")}، وزايد: ${extra.slice(0, 2).join(", ")}`;
   }
 
-  const isCorrect = matchRatio >= 0.15; // تساهل أكبر
+  const isCorrect = matchRatio >= 0.3; // أكثر تسامح
   return { correct: isCorrect, reason };
 }
 
 /* ---------- تشغيل ---------- */
 loadAndGrade();
+
