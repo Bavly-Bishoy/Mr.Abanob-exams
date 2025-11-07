@@ -11,31 +11,109 @@ header {
   color: #fff;
   text-align: center;
   padding: 18px;
+  font-size: 24px;
+  letter-spacing: 1px;
 }
 
 main {
-  max-width: 900px;
+  max-width: 950px;
   margin: 28px auto;
   background: #fff;
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+}
+
+#examName {
+  text-align: center;
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+#studentNameDisplay {
+  display: block;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #0056b3;
+  margin-bottom: 25px;
 }
 
 #resultsContainer .question-result {
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  border: 1px solid #dbeeff;
+  padding: 18px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  border: 2px solid #dbeeff;
   background: #f8fbff;
+  transition: transform 0.2s ease;
+  font-size: 18px;
+  line-height: 1.8;
 }
 
+#resultsContainer .question-result:hover {
+  transform: scale(1.01);
+}
+
+/* ✅ الأسئلة الصحيحة */
 .correct {
-  border: 2px solid #28a745;
+  border: 3px solid #28a745;
   background: #eaffea;
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
 }
 
+/* ❌ الأسئلة الخاطئة */
 .wrong {
-  border: 2px solid #dc3545;
+  border: 3px solid #dc3545;
   background: #ffeaea;
+  box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
+}
+
+.question-result p {
+  margin: 10px 0;
+  font-size: 18px;
+}
+
+.question-result strong {
+  color: #000;
+}
+
+#summary {
+  text-align: center;
+  margin-top: 25px;
+}
+
+#summary h3 {
+  font-size: 24px;
+  color: #222;
+  padding: 15px;
+  border-radius: 10px;
+  background: #f0f8ff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 💬 شكل الملاحظة (السبب ليه الإجابة غلط) */
+.note {
+  background: #fff0f0;
+  border-right: 6px solid #e60000;
+  color: #b30000;
+  padding: 10px 15px;
+  margin-top: 10px;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+/* 📱 استجابة للجوال */
+@media (max-width: 600px) {
+  main {
+    padding: 15px;
+  }
+  .question-result {
+    font-size: 16px;
+  }
+  #summary h3 {
+    font-size: 20px;
+  }
 }
