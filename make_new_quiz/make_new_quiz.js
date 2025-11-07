@@ -203,27 +203,30 @@ function deleteQuestion(i) {
   renderQuestions();
 }
 
-/* -------- حفظ -------- */
+/* -------- حفظ الامتحان -------- */
 async function saveExamHandler() {
   const examName = document.getElementById("examName").value.trim();
   const lang = document.querySelector("input[name='lang']:checked").value;
   if (!examName) return alert("اكتب اسم الامتحان");
   if (questions.length === 0) return alert("أضف سؤال واحد على الأقل");
 
+  const examRef = push(ref(db, "exams"));
+  const examId = examRef.key;
+
   const exam = {
+    id: examId, // 👈 نحفظ الـ id جوّه الامتحان
     name: examName,
     lang,
     questions,
     createdAt: Date.now()
   };
 
-  const newExamRef = push(ref(db, "exams"));
-  exam.id = newExamRef.key;
-  await set(newExamRef, exam);
+  await set(examRef, exam);
 
-  alert("✅ تم حفظ الامتحان بنجاح");
+  alert("✅ تم حفظ الامتحان");
   window.location.href = "../index.html";
 }
+
 
 /* -------- تشغيل -------- */
 document.addEventListener("DOMContentLoaded", () => {
@@ -232,3 +235,4 @@ document.addEventListener("DOMContentLoaded", () => {
   addQuestionBtn().onclick = addQuestionHandler;
   saveExamBtn().onclick = saveExamHandler;
 });
+
