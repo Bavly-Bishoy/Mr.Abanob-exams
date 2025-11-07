@@ -65,17 +65,12 @@ function editExam(examId) {
 
 /* ---------- نسخ رابط الطالب ---------- */
 function copyExamLink(examId) {
-  // لو الموقع على GitHub Pages
-  const baseUrl = "https://bavly-bishoy.github.io";
-  const examUrl = `${baseUrl}/student/student.html?examId=${examId}`;
-
+  const examUrl = `${window.location.origin}/student/student.html?examId=${examId}`;
   navigator.clipboard.writeText(examUrl).then(() => {
-    alert("✅ تم نسخ رابط الامتحان! أرسله للطلاب.");
-  }).catch(err => {
-    console.error(err);
-    alert("❌ حدث خطأ أثناء نسخ الرابط.");
+    alert("✅ تم نسخ الرابط!");
   });
 }
+
 
 /* ---------- فتح كطالب ---------- */
 function openAsStudent(examId) {
@@ -100,3 +95,4 @@ createExamBtn.addEventListener("click", () => {
 
 /* ---------- تحميل الامتحانات عند الفتح ---------- */
 loadExams();
+
