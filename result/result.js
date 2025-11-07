@@ -136,9 +136,33 @@ function escapeHtml(s) {
 
 function essayMatch(user, correct) {
   if (!user || !correct) return false;
-  const clean = str => str.toLowerCase().replace(/[^ء-يa-z0-9\s]/g,'').trim();
-  const userWords = clean(user).split(/\s+/).filter(w => w.length>2);
-  const correctWords = clean(correct).split(/\s+/).filter(w => w.length>2);
+
+  const clean = str => str
+    .toLowerCase()
+    .replace(/[^ء-يa-z0-9\s']/g, '')
+    .replace(/\bi'm\b/g, 'i am')
+    .replace(/\bcan't\b/g, 'cannot')
+    .replace(/\bwon't\b/g, 'will not')
+    .replace(/\bdon't\b/g, 'do not')
+    .trim();
+
+  const normalize = word => {
+    const synonyms = {
+      fine: ["good", "well", "ok", "okay"],
+      yes: ["yeah", "yep", "sure", "of course"],
+      no: ["nope", "nah"],
+      happy: ["glad", "pleased"],
+      sad: ["unhappy", "upset"],
+      thank: ["thanks", "thankyou", "thank you"],
+    };
+    for (const [base, list] of Object.entries(synonyms)) {
+      if (list.includes(word)) return base;
+    }
+    return word;
+  };
+
+  const userWords = clean(user).split(/\s+/).map(normalize);
+  const correctWords = clean(correct).split(/\s+/).map(normalize);
 
   if (userWords.length === 0 || correctWords.length === 0) return false;
 
@@ -148,7 +172,8 @@ function essayMatch(user, correct) {
   });
 
   const matchRatio = matches / correctWords.length;
-  return matchRatio >= 0.3;
+  return matchRatio >= 0.15; // تم تخفيض الحد من 30% إلى 15%
 }
 
 loadAndGrade();
+
