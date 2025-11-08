@@ -50,6 +50,7 @@ main {
   transition: transform 0.2s ease;
   font-size: 18px;
   line-height: 1.8;
+  direction: ltr;
 }
 
 #resultsContainer .question-result:hover {
@@ -118,4 +119,5 @@ main {
     font-size: 20px;
   }
 }
+
 
