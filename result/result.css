@@ -1,4 +1,4 @@
-body {
+ body {
   font-family: "Cairo", sans-serif;
   background: linear-gradient(135deg, #e3f2ff, #f4f8ff);
   margin: 0;
@@ -13,6 +13,7 @@ header {
   padding: 18px;
   font-size: 24px;
   letter-spacing: 1px;
+  direction: ltr;
 }
 
 main {
@@ -117,3 +118,4 @@ main {
     font-size: 20px;
   }
 }
+
