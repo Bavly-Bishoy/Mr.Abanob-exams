@@ -28,7 +28,7 @@ main {
   margin-bottom: 16px;
 }
 #studentName {
-  width: 100%;
+  width: 95%;
   padding: 12px;
   border: 2px solid #007bff;
   border-radius: 10px;
@@ -84,6 +84,7 @@ footer {
   padding: 18px;
   color: #555;
 }
+
 
 
 
