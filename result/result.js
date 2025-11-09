@@ -1,3 +1,4 @@
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import { getDatabase, ref, get, push } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
@@ -62,7 +63,6 @@ async function loadAndGrade() {
     const userAns = (answers[key] || "").toString();
     let isCorrect = false;
     let correctDisplay = "";
-    let reason = "";
 
     if (q.type === "multiple") {
       const correctOp = Array.isArray(q.options) ? q.options.find(o => o.correct) : null;
@@ -73,9 +73,7 @@ async function loadAndGrade() {
       isCorrect = userAns === String(q.correct);
     } else { 
       correctDisplay = q.correctAnswer || "";
-      const essayResult = essayMatch(userAns, q.correctAnswer || "");
-      isCorrect = essayResult.correct;
-      reason = essayResult.reason || "";
+      isCorrect = essayMatch(userAns, q.correctAnswer || "");
     }
 
     if (isCorrect) correctCount++;
@@ -85,12 +83,7 @@ async function loadAndGrade() {
     div.innerHTML = `
       <p><strong>${idx + 1}.</strong> ${escapeHtml(q.text)}</p>
       <p><strong>إجابتك:</strong> ${escapeHtml(userAns || "لم يجب")}</p>
-      ${
-        (q.type !== "essay")
-          ? `<p><strong>الإجابة الصحيحة:</strong> ${escapeHtml(correctDisplay)}</p>`
-          : `<p><strong>الإجابة النموذجية:</strong> ${escapeHtml(correctDisplay)}</p>
-             ${reason ? `<p style="color:#c00;"><strong>ملاحظة:</strong> ${escapeHtml(reason)}</p>` : ""}`
-      }
+      ${ (q.type !== "essay") ? `<p><strong>الإجابة الصحيحة:</strong> ${escapeHtml(correctDisplay)}</p>` : `<p><strong>الإجابة النموذجية:</strong> ${escapeHtml(correctDisplay)}</p>`}
     `;
     resultsContainer.appendChild(div);
 
@@ -99,8 +92,7 @@ async function loadAndGrade() {
       question: q.text,
       userAnswer: userAns,
       correctAnswer: correctDisplay,
-      isCorrect,
-      reason
+      isCorrect
     });
   });
 
@@ -140,25 +132,19 @@ async function loadAndGrade() {
 
 function escapeHtml(s) {
   if (!s) return "";
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+  return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-/* ---------- تصحيح الإجابات المقاليّة ---------- */
 function essayMatch(user, correct) {
-  if (!user || !correct)
-    return { correct: false, reason: "لم يتم إدخال إجابة." };
+  if (!user || !correct) return false;
 
   const clean = str => str
     .toLowerCase()
     .replace(/[^ء-يa-z0-9\s']/g, '')
-    .replace(/\b(i'm)\b/g, 'i am')
+    .replace(/\bi'm\b/g, 'i am')
     .replace(/\bcan't\b/g, 'cannot')
     .replace(/\bwon't\b/g, 'will not')
     .replace(/\bdon't\b/g, 'do not')
-    .replace(/\bthe\b/g, '') // ← تجاهل كلمة "the"
     .trim();
 
   const normalize = word => {
@@ -169,9 +155,6 @@ function essayMatch(user, correct) {
       happy: ["glad", "pleased"],
       sad: ["unhappy", "upset"],
       thank: ["thanks", "thankyou", "thank you"],
-      energy: ["power", "strength"],
-      eat: ["consume"],
-      food: ["meal", "nutrition"],
     };
     for (const [base, list] of Object.entries(synonyms)) {
       if (list.includes(word)) return base;
@@ -182,8 +165,7 @@ function essayMatch(user, correct) {
   const userWords = clean(user).split(/\s+/).map(normalize);
   const correctWords = clean(correct).split(/\s+/).map(normalize);
 
-  if (userWords.length === 0 || correctWords.length === 0)
-    return { correct: false, reason: "لم يتم إدخال إجابة مفهومة." };
+  if (userWords.length === 0 || correctWords.length === 0) return false;
 
   let matches = 0;
   correctWords.forEach(cw => {
@@ -191,26 +173,7 @@ function essayMatch(user, correct) {
   });
 
   const matchRatio = matches / correctWords.length;
-  const missing = correctWords.filter(w => !userWords.includes(w));
-  const extra = userWords.filter(w => !correctWords.includes(w));
-
-  let reason = "";
-  if (matchRatio >= 0.8) {
-    return { correct: true, reason: "" }; // إجابة صحيحة تقريبًا
-  } else if (matchRatio >= 0.5) {
-    reason = "إجابتك قريبة من الصحيحة جدًا، بس فيها اختلاف بسيط في الصياغة.";
-  } else if (missing.length > 0 && extra.length === 0) {
-    reason = `ناقص كلمات مثل: ${missing.slice(0, 3).join(", ")}`;
-  } else if (extra.length > 0 && missing.length === 0) {
-    reason = `في إجابتك كلمات زائدة: ${extra.slice(0, 3).join(", ")}`;
-  } else if (missing.length > 0 && extra.length > 0) {
-    reason = `ناقص كلمات مثل: ${missing.slice(0, 2).join(", ")}، وزايد: ${extra.slice(0, 2).join(", ")}`;
-  }
-
-  const isCorrect = matchRatio >= 0.3; // أكثر تسامح
-  return { correct: isCorrect, reason };
+  return matchRatio >= 0.15; // تم تخفيض الحد من 30% إلى 15%
 }
 
-/* ---------- تشغيل ---------- */
 loadAndGrade();
-مش اخفاء التفسير ولا الكلام ده
