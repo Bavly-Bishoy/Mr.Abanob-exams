@@ -88,7 +88,9 @@ async function loadAndGrade() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ question: q.text, studentAnswer: userAns, correctAnswer: q.correctAnswer || "" })
           });
-          const data = await res.json(); // متوقع JSON من السكريبت: {correct: true/false, reason: "..."}
+          const text = await res.text();
+          console.log("Gemini Response:", text);
+          //هنا اعمل تحليل النص بناءً على الصياغة الحقيقية
           isCorrect = data.correct;
           reason = data.reason || "";
           correctDisplay = q.correctAnswer || "";
@@ -133,3 +135,4 @@ async function loadAndGrade() {
 
 /* ---------- Run ---------- */
 loadAndGrade();
+
