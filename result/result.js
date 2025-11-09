@@ -146,71 +146,95 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;");
 }
 
-/* ---------- تصحيح الإجابات المقاليّة ---------- */
+/* ---------- دالة تصحيح مقالي محسّنة - استبدلي بها الدالة القديمة ---------- */
 function essayMatch(user, correct) {
-  if (!user || !correct)
-    return { correct: false, reason: "لم يتم إدخال إجابة." };
+  // حالات سريعة
+  if (!user || !user.trim()) 
+    return { correct: false, reason: "لم تُدخل إجابة. الرجاء كتابة جملة أو فقرة توضح فكرتك." };
+  if (!correct || !correct.trim())
+    return { correct: false, reason: "لا توجد إجابة نموذجية لمقارنة إجابتك — تأكد من إعداد السؤال." };
 
-  const clean = str => str
+  // تنظيف النصوص (يحافظ على العربية والإنجليزية والأرقام وبعض الأحرف)
+  const clean = str => String(str)
     .toLowerCase()
-    .replace(/[^ء-يa-z0-9\s']/g, '')
-    .replace(/\b(i'm)\b/g, 'i am')
-    .replace(/\bcan't\b/g, 'cannot')
-    .replace(/\bwon't\b/g, 'will not')
-    .replace(/\bdon't\b/g, 'do not')
-    .replace(/\bthe\b/g, '') // ← تجاهل كلمة "the"
+    .replace(/[^\u0600-\u06FFa-z0-9\s']/g, ' ') // احتفاظ بالعربية واللاتينية والأرقام
+    .replace(/\s+/g, ' ')
     .trim();
 
-  const normalize = word => {
-    const synonyms = {
-      fine: ["good", "well", "ok", "okay"],
-      yes: ["yeah", "yep", "sure", "of course"],
-      no: ["nope", "nah"],
-      happy: ["glad", "pleased"],
-      sad: ["unhappy", "upset"],
-      thank: ["thanks", "thankyou", "thank you"],
-      energy: ["power", "strength"],
-      eat: ["consume"],
-      food: ["meal", "nutrition"],
+  // خريطة مرادفات بسيطة لتقليل حساسية الصياغة
+  const normalizeWord = w => {
+    const map = {
+      "good": "good", "well": "good", "ok": "good", "okay": "good",
+      "yes": "yes", "yeah": "yes", "yep": "yes",
+      "no": "no", "nah": "nope",
+      "eat": "eat", "consume": "eat",
+      "food": "food", "meal": "food",
+      "energy": "energy", "power": "energy"
+      // أضيفي هنا مرادفات تحتاجيها لاحقًا
     };
-    for (const [base, list] of Object.entries(synonyms)) {
-      if (list.includes(word)) return base;
-    }
-    return word;
+    return map[w] || w;
   };
 
-  const userWords = clean(user).split(/\s+/).map(normalize);
-  const correctWords = clean(correct).split(/\s+/).map(normalize);
+  const userWords = clean(user).split(/\s+/).map(normalizeWord).filter(Boolean);
+  const correctWords = clean(correct).split(/\s+/).map(normalizeWord).filter(Boolean);
 
   if (userWords.length === 0 || correctWords.length === 0)
-    return { correct: false, reason: "لم يتم إدخال إجابة مفهومة." };
+    return { correct: false, reason: "تعذر فهم كلمات الإجابة، اكتب جملة واضحة من فضلك." };
 
+  // حساب المطابقات
   let matches = 0;
-  correctWords.forEach(cw => {
-    if (userWords.includes(cw)) matches++;
-  });
+  const userSet = new Set(userWords);
+  correctWords.forEach(w => { if (userSet.has(w)) matches++; });
 
   const matchRatio = matches / correctWords.length;
-  const missing = correctWords.filter(w => !userWords.includes(w));
+
+  // كلمات ناقصة وزائدة (لإعطاء ملاحظات مفصلة)
+  const missing = correctWords.filter(w => !userSet.has(w));
   const extra = userWords.filter(w => !correctWords.includes(w));
 
-  let reason = "";
-if (matchRatio >= 0.8) {
-  return { correct: true, reason: "إجابتك صحيحة ومطابقة للفكرة الأساسية المطلوبة 👍" };
-} else if (matchRatio >= 0.5) {
-  return { correct: false, reason: "إجابتك قريبة جدًا من المطلوبة، لكن كان محتاج تضيف توضيح بسيط لإكمال المعنى." };
-} else if (missing.length > 0 && extra.length === 0) {
-  return { correct: false, reason: `إجابتك جيدة، لكن ناقص جزء مهم وهو: ${missing.slice(0, 3).join(", ")}` };
-} else if (extra.length > 0 && missing.length === 0) {
-  return { correct: false, reason: `إجابتك فيها تفاصيل زيادة مش مطلوبة، ركز بس على الفكرة الأساسية.` };
-} else {
-  return { correct: false, reason: `إجابتك فيها أجزاء ناقصة وزيادة، حاول تختصر وتلتزم بالنقاط الأساسية.` };
-}
-  const isCorrect = matchRatio >= 0.3; // أكثر تسامح
-  return { correct: isCorrect, reason };
+  // صياغة المعلومة بصوت مدرس - بالعربي
+  const makeTeacherMsg = () => {
+    // صياغة إجابة نموذجية مقترحة (بسيطة): استخدم الإجابة النموذجية كما هي
+    const suggested = correct.trim();
+
+    if (matchRatio >= 0.85) {
+      return {
+        correct: true,
+        reason: `إجابتك صحيحة ومطابقة للفكرة الأساسية. ممتاز 👍\n\nالإجابة النموذجية: ${suggested}\n\nملاحظة بسيطة: صياغتك مفهومة ويمكنك الحفاظ عليها كما هي.`
+      };
+    }
+
+    if (matchRatio >= 0.6) {
+      // قريبة جدًا — نقص نقاط صغيرة أو صيغ غير كاملة
+      let note = `إجابتك قريبة جدًا من المطلوبة، لكن فيها فروق بسيطة بحاجة لتعديل.`;
+      if (missing.length) note += `\nناقص كلمات مهمة مثل: ${[...new Set(missing)].slice(0,5).join(", ")}.`;
+      if (extra.length) note += `\nفيها كلمات زائدة غير ضرورية: ${[...new Set(extra)].slice(0,5).join(", ")}.`;
+      note += `\n\nالإجابة النموذجية: ${suggested}\n\nاقتراح لصياغتك: ${suggested}`; // نعرض النموذج كمقترح لصياغة أفضل
+      return { correct: false, reason: note };
+    }
+
+    if (matchRatio >= 0.35) {
+      // جزء من الفكرة موجود لكن ناقص عناصر أساسية
+      let note = `إجابتك فيها جزء من الفكرة الأساسية لكن ناقصها عناصر مهمة.`;
+      if (missing.length) note += `\nالكلمات/النقاط الناقصة: ${[...new Set(missing)].slice(0,6).join(", ")}.`;
+      note += `\nحاول تضيف النقاط السابقة لتكتمل الإجابة.\n\nالإجابة النموذجية: ${suggested}\n\nمثال مبسط مقترح: ${suggested}`;
+      return { correct: false, reason: note };
+    }
+
+    // أقل من ذلك => غير كافٍ
+    let note = `الإجابة غير كافية لتغطية الفكرة المطلوبة. حاول تذكر النقاط الأساسية التالية:\n- ${correctWords.slice(0,6).join(" ")}...`;
+    note += `\n\nالإجابة النموذجية: ${suggested}\n\nنصيحة: اكتب جملة كاملة توضح لماذا أو كيف (مثال مقترح أعلاه).`;
+    return { correct: false, reason: note };
+  };
+
+  const result = makeTeacherMsg();
+
+  // لو عايزة تعتبر بعض المطابقات كصحّو، ممكن تغيري العتبات أعلاه
+  return result;
 }
 
 /* ---------- تشغيل ---------- */
 loadAndGrade();
+
 
 
