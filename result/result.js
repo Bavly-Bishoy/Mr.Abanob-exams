@@ -195,22 +195,22 @@ function essayMatch(user, correct) {
   const extra = userWords.filter(w => !correctWords.includes(w));
 
   let reason = "";
-  if (matchRatio >= 0.8) {
-    return { correct: true, reason: "" }; // إجابة صحيحة تقريبًا
-  } else if (matchRatio >= 0.5) {
-    reason = "إجابتك قريبة من الصحيحة جدًا، بس فيها اختلاف بسيط في الصياغة.";
-  } else if (missing.length > 0 && extra.length === 0) {
-    reason = `ناقص كلمات مثل: ${missing.slice(0, 3).join(", ")}`;
-  } else if (extra.length > 0 && missing.length === 0) {
-    reason = `في إجابتك كلمات زائدة: ${extra.slice(0, 3).join(", ")}`;
-  } else if (missing.length > 0 && extra.length > 0) {
-    reason = `ناقص كلمات مثل: ${missing.slice(0, 2).join(", ")}، وزايد: ${extra.slice(0, 2).join(", ")}`;
-  }
-
+if (matchRatio >= 0.8) {
+  return { correct: true, reason: "إجابتك صحيحة ومطابقة للفكرة الأساسية المطلوبة 👍" };
+} else if (matchRatio >= 0.5) {
+  return { correct: false, reason: "إجابتك قريبة جدًا من المطلوبة، لكن كان محتاج تضيف توضيح بسيط لإكمال المعنى." };
+} else if (missing.length > 0 && extra.length === 0) {
+  return { correct: false, reason: `إجابتك جيدة، لكن ناقص جزء مهم وهو: ${missing.slice(0, 3).join(", ")}` };
+} else if (extra.length > 0 && missing.length === 0) {
+  return { correct: false, reason: `إجابتك فيها تفاصيل زيادة مش مطلوبة، ركز بس على الفكرة الأساسية.` };
+} else {
+  return { correct: false, reason: `إجابتك فيها أجزاء ناقصة وزيادة، حاول تختصر وتلتزم بالنقاط الأساسية.` };
+}
   const isCorrect = matchRatio >= 0.3; // أكثر تسامح
   return { correct: isCorrect, reason };
 }
 
 /* ---------- تشغيل ---------- */
 loadAndGrade();
+
 
