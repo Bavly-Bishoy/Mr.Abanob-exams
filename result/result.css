@@ -61,19 +61,23 @@ main {
 .correct {
   border: 3px solid #28a745;
   background: #eaffea;
-  box-shadow: 0 0 10px rgba(40, 167, 69, 0.3);
+  box-shadow: 0 0 10px rgba(40, 167, 69, 1);
 }
 
 /* ❌ الأسئلة الخاطئة */
 .wrong {
   border: 3px solid #dc3545;
   background: #ffeaea;
-  box-shadow: 0 0 10px rgba(220, 53, 69, 0.3);
+  box-shadow: 0 0 10px rgba(220, 53, 69, 1);
 }
 
 .question-result p {
   margin: 10px 0;
   font-size: 18px;
+}
+
+.question-result p:not(:first-child) {
+ direction: rtl;
 }
 
 .question-result strong {
@@ -119,5 +123,6 @@ main {
     font-size: 20px;
   }
 }
+
 
 
