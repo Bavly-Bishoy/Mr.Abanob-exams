@@ -1,10 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  push,
-  set
-} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+import { getDatabase, ref, push, set, get } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
 /* ---------- Firebase config ---------- */
 const firebaseConfig = {
@@ -25,11 +20,16 @@ const db = getDatabase(app);
 let questions = [];
 let editingIndex = null;
 
-/* ------ escape HTML ------ */
+// قراءة examId من URL للتعديل
+const params = new URLSearchParams(window.location.search);
+const editExamId = params.get("edit");
+
+/* ---------- escape HTML ---------- */
 function escapeHtml(t) {
   return t.replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+/* ---------- DOM shortcuts ---------- */
 const questionType = () => document.getElementById("questionType");
 const extraFields = () => document.getElementById("extraFields");
 const questionText = () => document.getElementById("questionText");
@@ -37,14 +37,14 @@ const addQuestionBtn = () => document.getElementById("addQuestion");
 const saveExamBtn = () => document.getElementById("saveExam");
 const questionsContainer = () => document.getElementById("questionsContainer");
 
-/* ------ ترجمة نوع السؤال ------ */
+/* ---------- ترجمة نوع السؤال ---------- */
 function translateType(type) {
   if (type === "essay") return "مقالي";
   if (type === "truefalse") return "صح أو خطأ";
   return "اختيارات";
 }
 
-/* ------ إظهار الحقول ------ */
+/* ---------- عرض الحقول الإضافية حسب نوع السؤال ---------- */
 function renderExtraFields() {
   const type = questionType().value;
   const container = extraFields();
@@ -72,16 +72,12 @@ function renderExtraFields() {
         </div>
       `);
     };
-  }
-
-  else if (type === "truefalse") {
+  } else if (type === "truefalse") {
     container.innerHTML = `
       <label><input type="radio" name="tf" value="true"> صح ✅</label>
       <label><input type="radio" name="tf" value="false"> خطأ ❌</label>
     `;
-  }
-
-  else {
+  } else {
     container.innerHTML = `
       <label>الإجابة النموذجية:</label>
       <textarea id="essayAnswer" placeholder="اكتب الإجابة النموذجية"></textarea>
@@ -89,7 +85,7 @@ function renderExtraFields() {
   }
 }
 
-/* -------- إضافة / تعديل -------- */
+/* ---------- إضافة أو تعديل سؤال ---------- */
 function addQuestionHandler() {
   const text = questionText().value.trim();
   const type = questionType().value;
@@ -132,7 +128,7 @@ function addQuestionHandler() {
   extraFields().innerHTML = "";
 }
 
-/* -------- عرض الأسئلة -------- */
+/* ---------- عرض جميع الأسئلة ---------- */
 function renderQuestions() {
   const container = questionsContainer();
   container.innerHTML = "";
@@ -145,7 +141,6 @@ function renderQuestions() {
         <strong>${i + 1}.</strong> ${escapeHtml(q.text)} 
         <small>(${translateType(q.type)})</small>
       </div>
-
       <div class="action-buttons">
         <button class="edit-btn" data-index="${i}" style="background:#28a745">✏️ تعديل</button>
         <button class="delete-btn" data-index="${i}" style="background:#dc3545">🗑️ حذف</button>
@@ -158,13 +153,12 @@ function renderQuestions() {
   document.querySelectorAll(".edit-btn").forEach(btn =>
     btn.onclick = () => editQuestion(btn.dataset.index)
   );
-
   document.querySelectorAll(".delete-btn").forEach(btn =>
     btn.onclick = () => deleteQuestion(btn.dataset.index)
   );
 }
 
-/* -------- تعديل -------- */
+/* ---------- تعديل سؤال ---------- */
 function editQuestion(i) {
   editingIndex = i;
   const q = questions[i];
@@ -180,7 +174,7 @@ function editQuestion(i) {
       wrapper.insertAdjacentHTML("beforeend", `
         <div class="option-input">
           <input type="text" class="opt-text" value="${o.text}" />
-          <label><input type="checkbox" class="opt-correct" ${o.correct?"checked":""}/> إجابة صحيحة</label>
+          <label><input type="checkbox" class="opt-correct" ${o.correct ? "checked" : ""}/> إجابة صحيحة</label>
         </div>
       `);
     });
@@ -197,24 +191,34 @@ function editQuestion(i) {
   addQuestionBtn().textContent = "💾 حفظ التعديل";
 }
 
-/* -------- حذف -------- */
+/* ---------- حذف سؤال ---------- */
 function deleteQuestion(i) {
   questions.splice(i, 1);
   renderQuestions();
 }
 
-/* -------- حفظ الامتحان -------- */
+/* ---------- حفظ الامتحان ---------- */
 async function saveExamHandler() {
   const examName = document.getElementById("examName").value.trim();
   const lang = document.querySelector("input[name='lang']:checked").value;
   if (!examName) return alert("اكتب اسم الامتحان");
   if (questions.length === 0) return alert("أضف سؤال واحد على الأقل");
 
-  const examRef = push(ref(db, "exams"));
-  const examId = examRef.key;
+  let examRef;
+  let examId;
+
+  if (editExamId) {
+    // تعديل الامتحان الحالي
+    examRef = ref(db, `exams/${editExamId}`);
+    examId = editExamId;
+  } else {
+    // إنشاء امتحان جديد
+    examRef = push(ref(db, "exams"));
+    examId = examRef.key;
+  }
 
   const exam = {
-    id: examId, // 👈 نحفظ الـ id جوّه الامتحان
+    id: examId,
     name: examName,
     lang,
     questions,
@@ -223,16 +227,27 @@ async function saveExamHandler() {
 
   await set(examRef, exam);
 
-  alert("✅ تم حفظ الامتحان");
+  alert(editExamId ? "✅ تم تعديل الامتحان" : "✅ تم حفظ الامتحان");
   window.location.href = "../index.html";
 }
 
-
-/* -------- تشغيل -------- */
+/* ---------- التشغيل ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   renderExtraFields();
   questionType().onchange = renderExtraFields;
   addQuestionBtn().onclick = addQuestionHandler;
   saveExamBtn().onclick = saveExamHandler;
-});
 
+  // لو في examId للتعديل، جلب البيانات
+  if (editExamId) {
+    const examRef = ref(db, `exams/${editExamId}`);
+    get(examRef).then(snap => {
+      if (!snap.exists()) return alert("❌ الامتحان غير موجود.");
+      const exam = snap.val();
+      document.getElementById("examName").value = exam.name;
+      document.querySelector(`input[name='lang'][value='${exam.lang}']`).checked = true;
+      questions = exam.questions || [];
+      renderQuestions();
+    });
+  }
+});
