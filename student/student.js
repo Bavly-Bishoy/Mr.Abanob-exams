@@ -51,7 +51,7 @@ async function loadExam() {
   examTitle.textContent = exam.name || "امتحان";
 
   // لغة الامتحان (ar / en)
-  const examLanguage = exam.language === "en" ? "en" : "ar";
+  const examLanguage = exam.lang === "en" ? "en" : "ar";
 
   // ضبط اتجاه الصفحة
   document.documentElement.setAttribute(
@@ -156,3 +156,4 @@ submitBtn.addEventListener("click", () => {
 });
 
 loadExam();
+
