@@ -40,7 +40,7 @@ main {
   padding: 14px;
   border-radius: 12px;
   margin-bottom: 14px;
-  direction: ltr;
+  direction: rtl;
 }
 .question-box p {
   margin: 0 0 10px;
@@ -86,6 +86,7 @@ footer {
   margin-right: auto; 
   margin-left: auto; 
 }
+
 
 
 
