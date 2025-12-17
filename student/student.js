@@ -6,7 +6,7 @@ import {
   get,
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
 
-/* ---------- Firebase config (موجود عندك) ---------- */
+/* ---------- Firebase config ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyAVFxlp7aXIuIKiq9ySeyE4d6R-a4WLVGc",
   authDomain: "mr-abanob-exams.firebaseapp.com",
@@ -20,13 +20,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ---------- عناصر DOM ---------- */
+/* ---------- DOM ---------- */
 const examTitle = document.getElementById("examTitle");
 const examForm = document.getElementById("examForm");
 const submitBtn = document.getElementById("submitBtn");
 const studentNameInput = document.getElementById("studentName");
 
-/* ---------- examId من URL (مثلاً: student.html?examId=ABC) ---------- */
+/* ---------- examId من URL ---------- */
 const params = new URLSearchParams(window.location.search);
 const examId = params.get("examId");
 
@@ -35,9 +35,10 @@ if (!examId) {
     "❌ لا يوجد examId في الرابط. افتح الصفحة برابط الامتحان.";
 }
 
-// تحميل الامتحان من Firebase
+/* ---------- تحميل الامتحان ---------- */
 async function loadExam() {
   if (!examId) return;
+
   const examRef = ref(db, `exams/${examId}`);
   const snap = await get(examRef);
 
@@ -49,17 +50,31 @@ async function loadExam() {
   const exam = snap.val();
   examTitle.textContent = exam.name || "امتحان";
 
-  // render questions
+  // لغة الامتحان (ar / en)
+  const examLanguage = exam.language === "en" ? "en" : "ar";
+
+  // ضبط اتجاه الصفحة
+  document.documentElement.setAttribute(
+    "dir",
+    examLanguage === "ar" ? "rtl" : "ltr"
+  );
+  document.documentElement.setAttribute("lang", examLanguage);
+
+  // عرض الأسئلة
   exam.questions.forEach((q, idx) => {
     const box = document.createElement("div");
-    box.className = "question-box";
+    box.classList.add("question-box");
+
+    // اتجاه السؤال
+    box.classList.add(examLanguage === "ar" ? "rtl" : "ltr");
     box.dataset.qindex = idx;
 
-    let inner = `<p><strong>${idx + 1}.</strong> ${q.text}</p>`;
+    let inner = `<p><strong>${idx + 1}.</strong> ${escapeHtml(
+      q.text
+    )}</p>`;
 
     if (q.type === "multiple") {
-      // q.options is array of {text, correct}
-      q.options.forEach((opt, oi) => {
+      q.options.forEach((opt) => {
         inner += `
           <label>
             <input type="radio" name="q${idx}" value="${escapeHtml(opt.text)}">
@@ -69,19 +84,40 @@ async function loadExam() {
       });
     } else if (q.type === "truefalse") {
       inner += `
-        <label><input type="radio" name="q${idx}" value="true"> صح ✅</label>
-        <label><input type="radio" name="q${idx}" value="false"> خطأ ❌</label>
+        <label><input type="radio" name="q${idx}" value="true"> ${
+        examLanguage === "ar" ? "صح ✅" : "True ✅"
+      }</label>
+        <label><input type="radio" name="q${idx}" value="false"> ${
+        examLanguage === "ar" ? "خطأ ❌" : "False ❌"
+      }</label>
       `;
     } else {
-      // essay
-      inner += `<textarea name="q${idx}" placeholder="اكتب إجابتك هنا..."></textarea>`;
+      inner += `
+        <textarea 
+          name="q${idx}" 
+          placeholder="${
+            examLanguage === "ar"
+              ? "اكتب إجابتك هنا..."
+              : "Write your answer here..."
+          }"
+        ></textarea>
+      `;
     }
 
     box.innerHTML = inner;
+
+    // ضبط اتجاه الكتابة داخل textarea
+    const textarea = box.querySelector("textarea");
+    if (textarea) {
+      textarea.style.direction = examLanguage === "ar" ? "rtl" : "ltr";
+      textarea.style.textAlign = examLanguage === "ar" ? "right" : "left";
+    }
+
     examForm.appendChild(box);
   });
 }
 
+/* ---------- حماية HTML ---------- */
 function escapeHtml(s) {
   if (!s) return "";
   return String(s)
@@ -90,29 +126,31 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;");
 }
 
-// جمع الإجابات وحفظها ثم تحويل لصفحة النتيجة
+/* ---------- إرسال الإجابات ---------- */
 submitBtn.addEventListener("click", () => {
   const studentName = studentNameInput.value.trim();
-  if (!studentName) return alert("من فضلك اكتب اسمك");
+  if (!studentName) {
+    alert("من فضلك اكتب اسمك");
+    return;
+  }
 
-  // اجمع الإجابات
   const answers = {};
   const boxes = document.querySelectorAll(".question-box");
+
   boxes.forEach((box, idx) => {
     const qname = `q${idx}`;
     const radio = box.querySelector(`input[name="${qname}"]:checked`);
     const textarea = box.querySelector(`textarea[name="${qname}"]`);
+
     if (radio) answers[qname] = radio.value;
     else if (textarea) answers[qname] = textarea.value.trim();
     else answers[qname] = "";
   });
 
-  // خزن في localStorage (بنقله للصفحة التانية)
   localStorage.setItem("studentAnswers", JSON.stringify(answers));
   localStorage.setItem("studentName", studentName);
   localStorage.setItem("examId", examId);
 
-  // روح لصفحة النتيجة — ملاحظة: المسار النسبي يفترض result/ في نفس المستوى
   window.location.href =
     "../result/result.html?examId=" + encodeURIComponent(examId);
 });
